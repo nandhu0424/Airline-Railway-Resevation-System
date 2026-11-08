@@ -26,7 +26,7 @@ import json
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-app.config["JWT_SECRET_KEY"] = "airline-railway-super-secret-key-2024"
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "airline-railway-super-secret-key-2024")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 
 jwt = JWTManager(app)
@@ -34,14 +34,17 @@ jwt = JWTManager(app)
 # ─────────────────────────────────────────────────────────────
 # MongoDB Connection
 # ─────────────────────────────────────────────────────────────
+MONGO_URI = os.environ.get("MONGO_URI") or os.environ.get("MONGODB_URI") or "mongodb://localhost:27017/"
+DB_NAME = os.environ.get("DB_NAME", "reservation_system")
+
 try:
-    client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=5000)
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     client.server_info()  # Test connection
-    db = client["reservation_system"]
-    print("MongoDB connected successfully.")
+    db = client[DB_NAME]
+    print(f"MongoDB connected successfully to {DB_NAME}.")
 except Exception as e:
     print(f"MongoDB connection failed: {e}")
-    print("   Make sure MongoDB is running on localhost:27017")
+    print("   Make sure MongoDB is running locally or MONGO_URI is set.")
     db = None
 
 # Collections
@@ -161,6 +164,19 @@ def seed_trains():
         })
     trains_col.insert_many(trains)
     print(f"✅ Seeded {len(trains)} trains.")
+
+
+def init_db():
+    if db is not None:
+        try:
+            seed_flights()
+            seed_trains()
+        except Exception as e:
+            print(f"Seeding error: {e}")
+
+
+# Initialize seed data on startup (idempotent)
+init_db()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -544,10 +560,7 @@ def health():
 # Main Entry Point
 # ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    if db is not None:
-        try:
-            seed_flights()
-            seed_trains()
-        except Exception as e:
-            print(f"Seeding error: {e}")
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    init_db()
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "True").lower() in ("true", "1")
+    app.run(debug=debug, port=port, host="0.0.0.0")

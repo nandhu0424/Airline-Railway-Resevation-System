@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: skyrail-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend:app
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "False"
+
