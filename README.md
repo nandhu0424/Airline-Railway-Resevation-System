@@ -652,8 +652,8 @@ copies or substantial portions of the Software.
 
 | Contact | Link |
 |---------|------|
-| GitHub  | [@your-username](https://github.com/your-username) |
-| Email   | your-email@example.com |
+| GitHub  | [@nandhu0424](https://github.com/nandhu0424) |
+| Email   | nandhinin2004@gmail.com |
 
 ---
 
